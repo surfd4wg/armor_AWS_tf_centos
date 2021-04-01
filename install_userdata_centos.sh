@@ -1,5 +1,14 @@
 #!/bin/bash
+banner()
+{
+  echo "+------------------------------------------+"
+  printf "| %-40s |\n" "`date`"
+  echo "|                                          |"
+  printf "|`tput bold` %-40s `tput sgr0`|\n" "$@"
+  echo "+------------------------------------------+"
+}
 #--- apache ---
+banner "Installing Apache2"
 sudo yum -y update
 sudo dnf -y install python3-pip
 pip3 install awscli --upgrade --user
@@ -16,6 +25,7 @@ echo "<h1>Deployed via Terraform</h1>" | sudo tee /var/www/html/index.html
 #sudo systemctl start nginx
 #sudo systemctl enable nginx
 #--- curl and jq ---
+banner "Installing curl, wget, jq, nano, pwgen"
 sudo dnf -y install curl unzip
 sudo dnf -y install wget
 sudo dnf -y install jq
@@ -44,6 +54,7 @@ sudo usermod -aG wheel $USERNAME
 sudo dnf -y install pwgen
 sudo grep $USERNAME /etc/passwd >> /usercreds.txt
 PASSWORD=$(pwgen -ys 15 1)
+banner "Creating user:$USERNAME pass:$PASSWORD for rdp"
 sudo echo $USERNAME:$PASSWORD | sudo chpasswd
 sudo echo "Username:"$USERNAME, "Password:"$PASSWORD >> /rdpcreds.txt
 sudo echo "Home:"$HOME,"Username:"$USERNAME, "Password:"$PASSWORD
@@ -51,11 +62,11 @@ WHOIAM=$(whoami)
 sudo echo "WHO I AM:"$WHOIAM
 
 #--- Armor Agent ---
-#mkdir -p /home/ubuntu/armor
-#cd /home/ununtu/armor
-sudo curl -sSL https://agent.armor.com/latest/armor_agent.sh | sudo bash /dev/stdin -l XXXXX-XXXXX-XXXXX-XXXXX-XXXXX -r us-west-armor -f
+banner "Installing the Armor Agent"
+sudo curl -sSL https://agent.armor.com/latest/armor_agent.sh | sudo bash /dev/stdin -l BCDHC-FKWCQ-6J6JP-PBPF4-DWCPM -r us-west-armor -f
 
 #--- Metadata and index.html files ---
+banner "Generating webserver metadata"
 PRETTYpretty=$(cat /etc/os-release | awk -F '=' '/^PRETTY_NAME/{print $2}' | tr -d '"')
 #GET distro type and CREATE default index.html file
 sudo echo "Linux Distribution :"$PRETTYpretty
