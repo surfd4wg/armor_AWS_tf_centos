@@ -13,20 +13,20 @@ resource "random_id" "server" {
   byte_length = 8
 }
 
-data "aws_ami" "centos" {
+data "aws_ami" "debian" {
   most_recent = true
   tags = merge(
         local.common_tags,
 
         tomap(
           {"Zoo" = "AWS Zoofarm"
-          "RESOURCE" = "centos server"
+          "RESOURCE" = "ubuntu server"
           }
         )
         )
   filter {
     name   = "name"
-    values = ["CentOS 8.3.2011 x86_64"]
+    values = ["debian-stretch-hvm-x86_64-gp2-2021-03-09-67077"]
   }
 
   filter {
@@ -34,7 +34,7 @@ data "aws_ami" "centos" {
     values = ["hvm"]
   }
 
-  owners = ["125523088429"] # Centos
+  owners = ["379101102735"] # Debian
 
 
 }
@@ -46,18 +46,20 @@ resource "aws_instance" "webserver" {
 
         tomap(
           {"Zoo" = "AWS Zoofarm"
-          "RESOURCE" = "webserver AMI"
+           "Name" = "${var.myname}-${random_id.server.hex}-${count.index + 1}"
+           "RESOURCE" = "webserver AMI"
           }
         )
         )
-  ami                         = data.aws_ami.centos.id
+  ami                         = data.aws_ami.debian.id
   availability_zone           = var.avail_zone
   instance_type               = "t2.micro"
   key_name                    = aws_key_pair.terraform_pub_key.key_name
   vpc_security_group_ids      = [aws_security_group.allowall.id]
   subnet_id                   = aws_subnet.main.id
   associate_public_ip_address = true
-  user_data = "${file("install_userdata_centos.sh")}"
+  user_data = "${file("install_userdata_debian.sh")}"
+  count = var.instance_count
 #  provisioner "remote-exec" {
 #    inline = [
 #      "sudo apt update",
